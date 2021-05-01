@@ -68,5 +68,14 @@ namespace RelationalGit.Simulation
 
             return (totalComments, totalWorkDays, DateTime.Parse(recentWorkday));
         }
+        public bool HasTouchedTheFile(string filePath, string reviewerName){
+            var reviewerExpertise = _map.GetValueOrDefault(filePath)?.GetValueOrDefault(reviewerName);
+            if (reviewerExpertise == null || reviewerExpertise == (0, null))
+            {
+                return false;
+            }else{
+                return true;
+            }
+        }
     }
 }

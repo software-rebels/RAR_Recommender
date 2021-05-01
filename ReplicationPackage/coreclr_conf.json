@@ -1,6 +1,6 @@
  {
 	"ConnectionStrings": {
-	  "RelationalGit": "Server=ip_db_server;User Id=user_name;Password=pass_word;Database=coreclr"
+	  "RelationalGit": "Server=localhost;User Id=sa;Password=test;Database=CoreCLR"
 	},
 	"Mining": {
 	  "Extensions": [ ".cs",".java",".scala", ".vb",".rs",".go",".s",".proto",".coffee", ".sql",".rb",".ruby",".ts", ".js", ".jsx", ".sh", ".tsx", ".py", ".c", ".h", ".cpp", ".il", ".make", ".cmake", ".ps1", ".r", ".cmd"],

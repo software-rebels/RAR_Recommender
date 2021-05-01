@@ -16,6 +16,7 @@ namespace RelationalGit.Commands
         #region Fields
         private GitRepositoryDbContext _dbContext;
         private Commit[] _commits;
+        private Commit[] _bugFixCommits;
         private CommitBlobBlame[] _commitBlobBlames;
         private CommittedChange[] _committedChanges;
         private PullRequest[] _pullRequests;
@@ -86,6 +87,9 @@ namespace RelationalGit.Commands
             
             foreach (var result in results)
             {
+                var defectPronenessPerExpert = 0;
+                var numberOfExperts=0;
+                // foreach(var file in PullRequestContext.)
                 bulkPullRequestSimulatedRecommendationResults.Add(new Data.PullRequestRecommendationResult()
                 {
                     ActualReviewers = result.ActualReviewers?.Count() > 0 ? result.ActualReviewers?.Aggregate((a, b) => a + ", " + b) : null,
@@ -102,7 +106,8 @@ namespace RelationalGit.Commands
                     LossSimulationId = lossSimulation.Id,
                     Expertise = result.Expertise,
                     IsRisky = result.IsRisky,
-                    Features=result.Features
+                    Features=result.Features,
+                    DefectProneness = result.DefectProneness
                 });
 
                 for (int i = 0; i < result.SortedCandidates.Take(10).Count(); i++)
@@ -117,7 +122,7 @@ namespace RelationalGit.Commands
             }
 
             _dbContext.BulkInsert(bulkRecommendedPullRequestCandidatess, new BulkConfig { BatchSize = 50000, BulkCopyTimeout = 0 });
-            _dbContext.BulkInsert(bulkPullRequestSimulatedRecommendationResults, new BulkConfig { BatchSize = 50000, BulkCopyTimeout = 0 });
+             _dbContext.BulkInsert(bulkPullRequestSimulatedRecommendationResults, new BulkConfig { BatchSize = 50000, BulkCopyTimeout = 0 });
         }
 
         private void SaveOwnershipDistribution(KnowledgeDistributionMap knowledgeDistributioneMap, LossSimulation lossSimulation, Dictionary<long, IEnumerable<SimulatedLeaver>> leavers)
@@ -355,6 +360,15 @@ namespace RelationalGit.Commands
 
             _logger.LogInformation("{datetime}: Commits are loaded.", DateTime.Now);
 
+            String bugIndications = "%fix%,%bug%,%error%,%fixup%,%fail%";
+            var bugIndicationTerms = bugIndications.Split(',').Select(q => $"([Message] LIKE '{q}')").Aggregate((a, b) => a + " OR " + b);
+            var queryBugFix = $@"SELECT * From Commits Where ignore!='1' And ({bugIndicationTerms})";
+
+
+            _bugFixCommits = _dbContext.Commits.FromSql(queryBugFix).ToArray();
+
+            _logger.LogInformation("{datetime}: Bug Fix Commits are loaded.", DateTime.Now);
+
             _commitBlobBlames = _dbContext.CommitBlobBlames.Where(q => !q.Ignore).ToArray();
 
             _logger.LogInformation("{datetime}: Blames are loaded.", DateTime.Now);
@@ -447,7 +461,10 @@ namespace RelationalGit.Commands
             lossSimulation.FirstPeriod,
             lossSimulation.SelectedReviewersType,
             lossSimulation.MinimumActualReviewersLength,
-            lossSimulation.MegaDevelopers);
+            lossSimulation.MegaDevelopers,
+            lossSimulation.MegaPullRequestSize,
+            _bugFixCommits
+            );
 
             return timeMachine;
         }

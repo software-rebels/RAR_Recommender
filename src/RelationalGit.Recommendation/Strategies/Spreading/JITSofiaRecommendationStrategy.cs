@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace RelationalGit.Recommendation
 {
-    public class SofiaRecommendationStrategy : ScoreBasedRecommendationStrategy
+    public class JITSofiaRecommendationStrategy : ScoreBasedRecommendationStrategy
     {
         private int? _numberOfPeriodsForCalculatingProbabilityOfStay;
         private double _alpha;
@@ -14,7 +14,7 @@ namespace RelationalGit.Recommendation
         private int _riskOwenershipThreshold;
         private double _hoarderRatio;
 
-        public SofiaRecommendationStrategy(string knowledgeSaveReviewerReplacementType, 
+        public JITSofiaRecommendationStrategy(string knowledgeSaveReviewerReplacementType, 
             ILogger logger, int? numberOfPeriodsForCalculatingProbabilityOfStay, 
             string pullRequestReviewerSelectionStrategy,
             bool? addOnlyToUnsafePullrequests,
@@ -50,9 +50,15 @@ namespace RelationalGit.Recommendation
 
             var expertiseScore = ComputeBirdReviewerScore(pullRequestContext, reviewer);
 
+            var defectPronenessScore = pullRequestContext.ComputeDefectPronenessScore();
+
             var alpha = pullRequestContext.GetRiskyFiles(_riskOwenershipThreshold).Length > 0 ? 1 : 0;
 
-            var score = (1 - alpha) * expertiseScore + alpha * spreadingScore;
+            // defectPronenessScore constant
+            if(defectPronenessScore > 0.3){
+                alpha = 0;
+            }
+            var score = 1 * ((1 - alpha) * expertiseScore + alpha * spreadingScore);
 
             return score;
         }

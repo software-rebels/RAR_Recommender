@@ -17,6 +17,7 @@ namespace RelationalGit.Calculation
             if (!Directory.Exists(analyzeResultPath))
                 Directory.CreateDirectory(analyzeResultPath);
 
+            CalculateDefectMitigationMetricLoss(actualSimulationId, recommenderSimulationIds, analyzeResultPath);
             CalculateFaRReduction(actualSimulationId, recommenderSimulationIds, analyzeResultPath);
             CalculateExpertiseLoss(actualSimulationId, recommenderSimulationIds, analyzeResultPath);
             CalculateWorkload(actualSimulationId, recommenderSimulationIds, 10, analyzeResultPath);
@@ -160,6 +161,84 @@ namespace RelationalGit.Calculation
             Write(result, Path.Combine(path, "workload_raw.csv"));
         }
 
+
+        public void CalculateDefectPronenessMitigationLoss(long actualId, long[] simulationsIds, string path)
+        {
+            if (!Directory.Exists(path))
+                Directory.CreateDirectory(path);
+
+            var result = new List<SimulationResult>();
+
+            using (var dbContext = GetDbContext())
+            {
+                var periods = dbContext.Periods.ToArray();
+                var pullRequests = dbContext.PullRequests.ToDictionary(q => q.Number);
+
+                var actualRecommendationResults = dbContext.PullRequestRecommendationResults.Where(q => q.LossSimulationId == actualId && q.ActualReviewersLength > 0)
+                    .Select(q => new { q.Expertise,q.PullRequestNumber})
+                    .ToArray();
+
+                var actualExpertise = new Dictionary<long, List<double>>();
+                foreach (var actualRecommendationResult in actualRecommendationResults)
+                {
+                    var prDateTime = pullRequests[(int)actualRecommendationResult.PullRequestNumber].CreatedAtDateTime;
+                    var period = periods.Single(q => q.FromDateTime <= prDateTime && q.ToDateTime >= prDateTime);
+
+                    if (!actualExpertise.ContainsKey(period.Id))
+                        actualExpertise[period.Id] = new List<double>();
+
+                    actualExpertise[period.Id].Add(actualRecommendationResult.Expertise);
+                }
+
+
+                var lastPeriod = actualExpertise.Max(q => q.Key);
+                actualExpertise.Remove(lastPeriod);
+
+                foreach (var simulationId in simulationsIds)
+                {
+                    var simulatedExpertise = new Dictionary<long, List<double>>();
+                    var lossSimulation = dbContext.LossSimulations.Single(q => q.Id == simulationId);
+                    var simulatedRecommendationResults = dbContext.PullRequestRecommendationResults.Where(q => q.LossSimulationId == simulationId && q.ActualReviewersLength > 0)
+                        .Select(q => new { q.Expertise,q.PullRequestNumber})
+                        .ToArray();
+
+                    foreach (var simulatedRecommendationResult in simulatedRecommendationResults)
+                    {
+                        var prDateTime = pullRequests[(int)simulatedRecommendationResult.PullRequestNumber].CreatedAtDateTime;
+                        var period = periods.Single(q => q.FromDateTime <= prDateTime && q.ToDateTime >= prDateTime);
+
+                        if (!simulatedExpertise.ContainsKey(period.Id))
+                            simulatedExpertise[period.Id] = new List<double>();
+
+                        simulatedExpertise[period.Id].Add(simulatedRecommendationResult.Expertise);
+                    }
+
+                    var simulationResult = new SimulationResult()
+                    {
+                        LossSimulation = lossSimulation
+                    };
+
+                    foreach (var simulatedExpertisePeriod in simulatedExpertise)
+                    {
+                        var periodId = simulatedExpertisePeriod.Key;
+                        var actualExpertises = actualExpertise.GetValueOrDefault(periodId);
+
+                        if (actualExpertises == null)
+                            continue;
+
+                        var value = CalculateIncreasePercentage(simulatedExpertisePeriod.Value.Sum(),
+                            actualExpertises.Sum());
+
+                        simulationResult.Results.Add((periodId, value));
+                    }
+
+                    result.Add(simulationResult);
+                }
+            }
+
+            Write(result, Path.Combine(path, "expertiseloss.csv"));
+        }
+
         public void CalculateExpertiseLoss(long actualId, long[] simulationsIds, string path)
         {
             if (!Directory.Exists(path))
@@ -235,6 +314,83 @@ namespace RelationalGit.Calculation
             }
 
             Write(result, Path.Combine(path, "expertiseloss.csv"));
+        }
+
+       public void CalculateDefectMitigationMetricLoss(long actualId, long[] simulationsIds, string path)
+        {
+            if (!Directory.Exists(path))
+                Directory.CreateDirectory(path);
+
+            var result = new List<SimulationResult>();
+
+            using (var dbContext = GetDbContext())
+            {
+                var periods = dbContext.Periods.ToArray();
+                var pullRequests = dbContext.PullRequests.ToDictionary(q => q.Number);
+
+                var actualRecommendationResults = dbContext.PullRequestRecommendationResults.Where(q => q.LossSimulationId == actualId && q.ActualReviewersLength > 0)
+                    .Select(q => new { q.Expertise,q.PullRequestNumber,q.DefectProneness})
+                    .ToArray();
+
+                var actualDefectPronenesses = new Dictionary<long, List<double>>();
+                foreach (var actualRecommendationResult in actualRecommendationResults)
+                {
+                    var prDateTime = pullRequests[(int)actualRecommendationResult.PullRequestNumber].CreatedAtDateTime;
+                    var period = periods.Single(q => q.FromDateTime <= prDateTime && q.ToDateTime >= prDateTime);
+
+                    if (!actualDefectPronenesses.ContainsKey(period.Id))
+                        actualDefectPronenesses[period.Id] = new List<double>();
+                    
+                    actualDefectPronenesses[period.Id].Add((double)actualRecommendationResult.DefectProneness);
+                }
+
+
+                var lastPeriod = actualDefectPronenesses.Max(q => q.Key);
+                actualDefectPronenesses.Remove(lastPeriod);
+
+                foreach (var simulationId in simulationsIds)
+                {
+                    var simulatedDefectPronenesses = new Dictionary<long, List<double>>();
+                    var lossSimulation = dbContext.LossSimulations.Single(q => q.Id == simulationId);
+                    var simulatedRecommendationResults = dbContext.PullRequestRecommendationResults.Where(q => q.LossSimulationId == simulationId && q.ActualReviewersLength > 0)
+                        .Select(q => new { q.Expertise,q.PullRequestNumber, q.DefectProneness})
+                        .ToArray();
+
+                    foreach (var simulatedRecommendationResult in simulatedRecommendationResults)
+                    {
+                        var prDateTime = pullRequests[(int)simulatedRecommendationResult.PullRequestNumber].CreatedAtDateTime;
+                        var period = periods.Single(q => q.FromDateTime <= prDateTime && q.ToDateTime >= prDateTime);
+
+                        if (!simulatedDefectPronenesses.ContainsKey(period.Id))
+                            simulatedDefectPronenesses[period.Id] = new List<double>();
+
+                        simulatedDefectPronenesses[period.Id].Add((double)simulatedRecommendationResult.DefectProneness);
+                    }
+
+                    var simulationResult = new SimulationResult()
+                    {
+                        LossSimulation = lossSimulation
+                    };
+
+                    foreach (var simulatedDefectPronenessPeriod in simulatedDefectPronenesses)
+                    {
+                        var periodId = simulatedDefectPronenessPeriod.Key;
+                        var actualDefectProneness = actualDefectPronenesses.GetValueOrDefault(periodId);
+                        var simulatedDefectProneness = simulatedDefectPronenesses.GetValueOrDefault(periodId);
+
+                        if (actualDefectProneness == null)
+                            continue;
+
+                        var value = CalculateIncreasePercentage(simulatedDefectProneness.Sum(),
+                            actualDefectProneness.Sum());
+
+                        simulationResult.Results.Add((periodId, value));
+                    }
+                    result.Add(simulationResult);
+                }
+            }
+
+            Write(result, Path.Combine(path, "defect_expertiseloss.csv"));
         }
 
         private static void CalculateHoardings(long actualId, long[] simulationsIds, int topReviewers, string path)

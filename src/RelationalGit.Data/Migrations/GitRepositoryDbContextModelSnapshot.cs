@@ -642,6 +642,8 @@ namespace RelationalGit.Data.Migrations
 
                     b.Property<double?>("MeanReciprocalRank");
 
+                    b.Property<double?>("DefectProneness");
+
                     b.Property<long>("PullRequestNumber");
 
                     b.Property<string>("SelectedReviewers");

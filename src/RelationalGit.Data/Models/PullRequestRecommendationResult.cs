@@ -30,5 +30,6 @@
         public bool IsSimulated { get;   set; }
         public bool? IsRisky { get; set; }
         public string Features { get; set; }
+        public double? DefectProneness { get; set; }
     }
 }

@@ -4,6 +4,8 @@ using System.Linq;
 using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using RelationalGit.Data;
+using RelationalGit.Simulation;
+using Microsoft.EntityFrameworkCore;
 
 namespace RelationalGit.Simulation
 {
@@ -55,11 +57,13 @@ namespace RelationalGit.Simulation
         private string _selectedReviewersType;
         private int _minimumActualReviewersLength;
         private HashSet<string> _megaDevelopersSet;
+        private int? _megaPullRequestSize;
         private int? _numberOfPeriodsForCalculatingProbabilityOfStay;
         private bool? _addOneReviewerToUnsafePullRequests;
         private static int _commit;
         private static List<PullRequestFile> _emptyPullRequestFiles = new List<PullRequestFile>();
 
+        private Data.Commit[] BugFixCommits;
         #endregion
 
         public TimeMachine(RecommendationStrategy knowledgeShareStrategy, ILogger logger)
@@ -71,7 +75,7 @@ namespace RelationalGit.Simulation
         public void Initiate(Data.Commit[] commits, CommitBlobBlame[] commitBlobBlames, Developer[] developers, DeveloperContribution[] developersContributions,
         CommittedChange[] committedChanges, PullRequest[] pullRequests, PullRequestFile[] pullRequestFiles, IssueComment[] issueComments,
         PullRequestReviewer[] pullRequestReviewers, PullRequestReviewerComment[] pullRequestReviewComments,
-        Dictionary<string, string> canononicalPathMapper, GitHubGitUser[] githubGitUsers, Period[] periods, int firstPeriod, string selectedReviewersType, int? minimumActualReviewersLength, IEnumerable<string> megaDevelopers)
+        Dictionary<string, string> canononicalPathMapper, GitHubGitUser[] githubGitUsers, Period[] periods, int firstPeriod, string selectedReviewersType, int? minimumActualReviewersLength, IEnumerable<string> megaDevelopers, int MegaPullRequestSize=0, Data.Commit[] bugFixCommits=null)
         {
             _logger.LogInformation("{datetime}: Trying to initialize TimeMachine.", DateTime.Now);
 
@@ -101,6 +105,9 @@ namespace RelationalGit.Simulation
             _minimumActualReviewersLength = minimumActualReviewersLength ?? 0;
 
             _megaDevelopersSet = megaDevelopers.ToHashSet();
+            _megaPullRequestSize = MegaPullRequestSize;
+            
+            BugFixCommits = bugFixCommits;
 
             _logger.LogInformation("{datetime}: TimeMachine is initialized.", DateTime.Now);
         }
@@ -209,7 +216,9 @@ namespace RelationalGit.Simulation
             var pullRequestKnowledgeableDevelopers = GetPullRequestKnowledgeables(pullRequestFiles, knowledgeMap, period);
 
             var actualReviewers = GetKnowledgeOfActualReviewers(PullRequestReviewersDic.GetValueOrDefault(pullRequest.Number) ?? new List<string>(0), pullRequestKnowledgeableDevelopers);
-
+           
+            var bugFixedFiles = GetBugFixCommits(pullRequest.MergedAtDateTime,pullRequestFiles);
+            
             return new PullRequestContext()
             {
                 SelectedReviewersType = _selectedReviewersType,
@@ -224,10 +233,34 @@ namespace RelationalGit.Simulation
                 Periods = this.PeriodsDic,
                 Developers = new ReadOnlyDictionary<string, Developer>(DevelopersDic),
                 Blames = BlameBasedKnowledgeMap.GetSnapshopOfPeriod(period.Id),
-                PullRequestKnowledgeables = pullRequestKnowledgeableDevelopers
+                PullRequestKnowledgeables = pullRequestKnowledgeableDevelopers,
+                BugFixCommitChanges = bugFixedFiles
             };
         }
+        private Data.CommittedChange[]  GetBugFixCommits(DateTime? to,PullRequestFile[] pullRequestFiles){
+            if(to==null){
+                return null;
+            }
+            if(pullRequestFiles.Count()==0){
+                return null;
+            }
+            var filesList = pullRequestFiles.Select(q=>q.FileName).ToArray();
+            var previousBuxFixes = BugFixCommits.Where(q=>q.CommitterDateTime < to).ToDictionary(q=>q.Sha);
+            var bugFixShas = previousBuxFixes.Keys.ToArray();
+            List<Data.CommittedChange> bugFixCommitsChanges=new List<Data.CommittedChange>();
+            foreach(var sha in bugFixShas){
+                if(!CommittedChangesDic.ContainsKey(sha)){
+                    continue;
+                }
+                foreach(Data.CommittedChange file in CommittedChangesDic[sha]){
+                    if(filesList.Contains(file.Path)){
+                        bugFixCommitsChanges.Add(file);
+                    }
+                }
+            }
 
+            return  bugFixCommitsChanges.ToArray();
+        }
         private IEnumerable<DeveloperKnowledge> GetKnowledgeOfActualReviewers(List<string> subset, DeveloperKnowledge[] superset)
         {
             foreach (var item in subset)
@@ -390,7 +423,8 @@ namespace RelationalGit.Simulation
             foreach (var file in pullRequestFiles)
             {
                 var canonicalPath = CanononicalPathMapper.GetValueOrDefault(file.FileName);
-                AssignKnowledgeToDeveloper(new Commit { NormalizedAuthorName= prSubmitter ,PeriodId=period.Id,Sha=pullRequest.MergeCommitSha,AuthorDateTime=pullRequest.MergedAtDateTime.Value}, file.ChangeKind, prSubmitter, period, canonicalPath);
+                AssignKnowledgeToDeveloper(new Commit { NormalizedAuthorName= prSubmitter ,PeriodId=period.Id,Sha=pullRequest.MergeCommitSha,AuthorDateTime=pullRequest.MergedAtDateTime.Value},
+                 file.ChangeKind, prSubmitter, period, canonicalPath);
             }
         }
 

@@ -57,7 +57,10 @@ namespace RelationalGit.KnowledgeShareStrategies
             {
                 return new ContributionRecRecommendationStrategy(knowledgeSaveReviewerReplacementType, logger, pullRequestReviewerSelectionStrategy, addOnlyToUnsafePullrequests, recommenderOption, changePast);
             }
-
+            else if (recommendationStrategy == KnowledgeShareStrategyType.JITSofia)
+            {
+                return new JITSofiaRecommendationStrategy(knowledgeSaveReviewerReplacementType, logger, numberOfPeriodsForCalculatingProbabilityOfStay, pullRequestReviewerSelectionStrategy, addOnlyToUnsafePullrequests, recommenderOption, changePast);
+            }
             throw new ArgumentException($"invalid {nameof(recommendationStrategy)}");
         }
     }

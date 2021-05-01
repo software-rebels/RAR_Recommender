@@ -51,6 +51,11 @@ namespace RelationalGit.Simulation
 
         public Dictionary<string,List<string>> _fileOwners { get; set; } = null;
 
+        public Data.CommittedChange[] BugFixCommitChanges { get; set; } = null;
+
+        public double? defectPronness { get; set; } = null;
+        public int? NumberOfExperts { get; set; } = null;
+
         public bool PullRequestFilesAreSafe
         {
             get
@@ -185,6 +190,7 @@ namespace RelationalGit.Simulation
             return (totalReviews, totalCommits);
         }
 
+
         private (int TotalReviews, int TotalCommits) GetTotalContributionsBestweenPeriods(DateTime from, DateTime to)
         {
             var totalCommits = 0;
@@ -246,7 +252,104 @@ namespace RelationalGit.Simulation
 
             return _totalContributionsInPeriodDic[periodId];
         }
+        
+        public double ComputeMaxExpertise(DeveloperKnowledge[] selectedReviewers)
+        {
+            if(this.NumberOfExperts!=null){
+                return (double)this.NumberOfExperts;
+            }
+            if(PullRequestFiles.Count()==0){
+                return 0;
+            }
+            Dictionary<string, double> expertDic = new Dictionary<string, double>();
+            foreach(var file in PullRequestFiles){
+                var fileExpertise = KnowledgeMap.PullRequestEffortKnowledgeMap.GetFileExpertise(file.FileName);
+                foreach(var reviewer in selectedReviewers){
+                    // if(KnowledgeMap.PullRequestEffortKnowledgeMap.HasTouchedTheFile(file.FileName,reviewer.DeveloperName)){
+                    //     expertDic[reviewer.DeveloperName]= 1;
+                    // }
+                    if(!expertDic.ContainsKey(reviewer.DeveloperName)){
+                        expertDic[reviewer.DeveloperName] = 0;
+                    }
+                    if(!KnowledgeMap.PullRequestEffortKnowledgeMap.HasTouchedTheFile(file.FileName,reviewer.DeveloperName)){
+                        continue;
+                    }
+
+                    var reviewerExpertise = KnowledgeMap.PullRequestEffortKnowledgeMap.GetReviewerExpertise(file.FileName, reviewer.DeveloperName);
+                    double scoreTotalComments = 0;
+                    scoreTotalComments = reviewerExpertise.TotalComments / (double)fileExpertise.TotalComments;
+
+                    double scoreTotalWorkDays = 0;
+                    scoreTotalWorkDays = reviewerExpertise.TotalWorkDays / (double)fileExpertise.TotalWorkDays;
+                    var scoreRecency = (fileExpertise.RecentWorkDay == reviewerExpertise.RecentWorkDay)
+                        ? 1
+                        : 1 / (fileExpertise.RecentWorkDay - reviewerExpertise.RecentWorkDay).Value.TotalDays;
+
+                    expertDic[reviewer.DeveloperName] += (scoreTotalComments + scoreTotalWorkDays + scoreRecency)/3;  
+                }
+            }
+            foreach(var reviewer in selectedReviewers){
+                expertDic[reviewer.DeveloperName] /= PullRequestFiles.Count();
+            }
+            return expertDic.Count()!=0 ? expertDic.Values.Max() : 0;
+         }
+        public double? ComputeDefectPronenessScore()
+        {
+            if(this.defectPronness!=null){
+                return this.defectPronness;
+            }
+
+            if(PullRequestFiles.Count()==0){
+                return 0;
+            }
+            double addLineCoefficient = 1;
+            double delLineCoefficient = 1;
+            double modificationLineCoefficient = 1;
+            double preReleaseBugsCoefficient = 2;
+
+            double additions = 0;
+            double deletions = 0;
+            double modifications = 0;
+            double changes = 0;
+
+            foreach (var file in PullRequestFiles)
+            {
+                additions += (double)file.Additions;
+                deletions += (double)file.Deletions;
+                modifications += (double)file.Changes;
+            }
+            var preReleaseBugCounts = new Dictionary<string, int>();
+
+            foreach(var file in BugFixCommitChanges){
+                if(!preReleaseBugCounts.ContainsKey(file.Path)){
+                    preReleaseBugCounts[file.Path] = 1;
+                    continue;
+                }
+                preReleaseBugCounts[file.Path] += 1;
+            }
+            var preReleaseBugScores =  new Dictionary<string, double>();
+            foreach(var file in PullRequestFiles){
+                if(!preReleaseBugCounts.ContainsKey(file.FileName)){
+                    preReleaseBugScores[file.FileName] = 0;
+                    continue;
+                }
+                preReleaseBugScores[file.FileName] = 1 -  Math.Pow(0.5,preReleaseBugCounts[file.FileName]);
+            }
+
+            var overallPreReleaseBugScore = preReleaseBugScores.Sum(q=>q.Value)/PullRequestFiles.Count();
+            changes = additions + deletions + modifications;
+            if(changes==0){
+                this.defectPronness = 0;
+            }else{
+                this.defectPronness = (addLineCoefficient * (additions/changes) + delLineCoefficient * (deletions/changes) + 
+                                        modificationLineCoefficient * (modifications/changes) + preReleaseBugsCoefficient * overallPreReleaseBugScore ) / (addLineCoefficient+ delLineCoefficient+modificationLineCoefficient+preReleaseBugsCoefficient);
+            }
+
+            return this.defectPronness;
+        }
     }
+
+    
 
     public class CommitComparer : IComparer<Commit>
     {
