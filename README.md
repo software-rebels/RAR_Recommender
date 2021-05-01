@@ -1,3 +1,6 @@
+# Defect Prediction Mitigation
+This Code is originated from the code published by MirSaeedi et. al. Please find all the neccessary information below to start the simulation. This code is empowered by the RelationalGit developed by the MirSaeedi and RigBy.
+
 # RelationalGit
 RelationalGit extracts valuable information about commits, blame, changes, devs, and pull requests out of git's data structure and imports them to a relational database such as Microsoft SQL Server. These data can be a ground for further source code mining analysis.
 
