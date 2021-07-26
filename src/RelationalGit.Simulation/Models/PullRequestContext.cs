@@ -311,9 +311,11 @@ namespace RelationalGit.Simulation
             double deletions = 0;
             double modifications = 0;
             double changes = 0;
+            var fileNo = 0;
 
             foreach (var file in PullRequestFiles)
             {
+                fileNo += 1;
                 additions += (double)file.Additions;
                 deletions += (double)file.Deletions;
                 modifications += (double)file.Changes;
