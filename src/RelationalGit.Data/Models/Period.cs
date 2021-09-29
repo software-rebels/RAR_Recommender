@@ -15,5 +15,8 @@ namespace RelationalGit.Data
         public string FirstCommitSha { get; set; }
 
         public string LastCommitSha { get; set; }
+
+        public string ModelParam { get; set; }
+
     }
 }

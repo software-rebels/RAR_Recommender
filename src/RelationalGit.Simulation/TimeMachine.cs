@@ -164,7 +164,7 @@ namespace RelationalGit.Simulation
                     UpdateReviewBasedKnowledgeMap(knowledgeMap, @event as PullRequest);
             }
 
-            _logger.LogInformation("{datetime}: flying in time has finished.", DateTime.Now);
+_logger.LogInformation("{datetime}: flying in time has finished.", DateTime.Now);
 
             return knowledgeMap;
         }

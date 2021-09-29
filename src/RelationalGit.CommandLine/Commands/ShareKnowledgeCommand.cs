@@ -90,6 +90,10 @@ namespace RelationalGit.Commands
                 var defectPronenessPerExpert = 0;
                 var numberOfExperts=0;
                 // foreach(var file in PullRequestContext.)
+                if (result.DefectProneness != 0)
+                {
+                    var k = 5;
+                }
                 bulkPullRequestSimulatedRecommendationResults.Add(new Data.PullRequestRecommendationResult()
                 {
                     ActualReviewers = result.ActualReviewers?.Count() > 0 ? result.ActualReviewers?.Aggregate((a, b) => a + ", " + b) : null,

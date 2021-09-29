@@ -8,6 +8,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using RelationalGit.Data;
 using RelationalGit.Gathering;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace RelationalGit
 {
@@ -18,6 +20,7 @@ namespace RelationalGit
             ConfigMapping.Config();
             var configurationOption = GetConfiguration(args);
             var logger = GetLogger();
+
 
             logger.LogInformation("{datetime} operation {command} has started", DateTime.Now, configurationOption.Command);
 

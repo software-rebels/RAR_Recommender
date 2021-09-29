@@ -43,12 +43,12 @@ namespace RelationalGit.Recommendation
 
         private static PullRequestRecommendationResult Recommendation(PullRequestContext pullRequestContext, DeveloperKnowledge[] availableDevs, PullRequestKnowledgeDistribution bestPullRequestKnowledgeDistribution)
         {
-            return new PullRequestRecommendationResult(bestPullRequestKnowledgeDistribution.PullRequestKnowledgeDistributionFactors.Reviewers.ToArray(), availableDevs, pullRequestContext.IsRisky(), pullRequestContext.Features, pullRequestContext.ComputeDefectPronenessScore(),pullRequestContext.ComputeMaxExpertise(bestPullRequestKnowledgeDistribution.PullRequestKnowledgeDistributionFactors.Reviewers.ToArray()));
+            return new PullRequestRecommendationResult(bestPullRequestKnowledgeDistribution.PullRequestKnowledgeDistributionFactors.Reviewers.ToArray(), availableDevs, pullRequestContext.IsRisky(), pullRequestContext.Features, pullRequestContext.ComputeDefectPronenessScore(),pullRequestContext.ComputeMaxExpertise(bestPullRequestKnowledgeDistribution.PullRequestKnowledgeDistributionFactors.Reviewers.ToArray()), pullRequestContext.PullRequest.Number);
         }
 
         private static PullRequestRecommendationResult Actual(PullRequestContext pullRequestContext)
         {
-            return new PullRequestRecommendationResult(pullRequestContext.ActualReviewers, Array.Empty<DeveloperKnowledge>(), pullRequestContext.IsRisky(), pullRequestContext.Features, pullRequestContext.ComputeDefectPronenessScore(),pullRequestContext.ComputeMaxExpertise(pullRequestContext.ActualReviewers));
+            return new PullRequestRecommendationResult(pullRequestContext.ActualReviewers, Array.Empty<DeveloperKnowledge>(), pullRequestContext.IsRisky(), pullRequestContext.Features, pullRequestContext.ComputeDefectPronenessScore(),pullRequestContext.ComputeMaxExpertise(pullRequestContext.ActualReviewers), pullRequestContext.PullRequest.Number);
         }
 
         internal PullRequestKnowledgeDistribution GetBestDistribution(List<PullRequestKnowledgeDistribution> simulationResults)

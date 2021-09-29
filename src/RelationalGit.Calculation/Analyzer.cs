@@ -380,9 +380,8 @@ namespace RelationalGit.Calculation
 
                         if (actualDefectProneness == null)
                             continue;
-
-                        var value = CalculateIncreasePercentage(simulatedDefectProneness.Sum(),
-                            actualDefectProneness.Sum());
+                        var value = CalculateIncreasePercentage((simulatedDefectProneness.Sum()+1),
+                            (actualDefectProneness.Sum()+1));
 
                         simulationResult.Results.Add((periodId, value));
                     }
