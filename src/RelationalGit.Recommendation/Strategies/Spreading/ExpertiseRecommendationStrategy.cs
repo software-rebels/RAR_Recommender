@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace RelationalGit.Recommendation
 {
-    public class JITSofiaRecommendationStrategy : ScoreBasedRecommendationStrategy
+    public class ExpertiseRecommendationStrategy : ScoreBasedRecommendationStrategy
     {
         private int? _numberOfPeriodsForCalculatingProbabilityOfStay;
         private double _alpha;
@@ -14,7 +14,7 @@ namespace RelationalGit.Recommendation
         private int _riskOwenershipThreshold;
         private double _hoarderRatio;
 
-        public JITSofiaRecommendationStrategy(string knowledgeSaveReviewerReplacementType, 
+        public ExpertiseRecommendationStrategy(string knowledgeSaveReviewerReplacementType, 
             ILogger logger, int? numberOfPeriodsForCalculatingProbabilityOfStay, 
             string pullRequestReviewerSelectionStrategy,
             bool? addOnlyToUnsafePullrequests,
@@ -46,41 +46,13 @@ namespace RelationalGit.Recommendation
 
         internal override double ComputeReviewerScore(PullRequestContext pullRequestContext, DeveloperKnowledge reviewer)
         {
-            double spreadingScore = GetPersistSpreadingScore(pullRequestContext, reviewer);
-
             var expertiseScore = ComputeBirdReviewerScore(pullRequestContext, reviewer);
 
-            var defectPronenessScore = pullRequestContext.ComputeDefectPronenessScore();
-
-            var alpha = pullRequestContext.GetRiskyFiles(_riskOwenershipThreshold).Length > 0 ? 1 : 0;
-
-            // defectPronenessScore constant
-            if(defectPronenessScore > 0.2){
-                alpha = 0;
-            }
-            var score = 1 * ((1 - alpha) * expertiseScore + alpha * spreadingScore);
+            var score = expertiseScore;
 
             return score;
         }
 
-        private double GetPersistSpreadingScore(PullRequestContext pullRequestContext, DeveloperKnowledge reviewer)
-        {
-            var reviewerImportance = pullRequestContext.IsHoarder(reviewer.DeveloperName) ? _hoarderRatio : 1;
-
-            var probabilityOfStay = pullRequestContext.GetProbabilityOfStay(reviewer.DeveloperName, _numberOfPeriodsForCalculatingProbabilityOfStay.Value);
-            var effort = pullRequestContext.GetEffort(reviewer.DeveloperName, _numberOfPeriodsForCalculatingProbabilityOfStay.Value);
-
-            var prFiles = pullRequestContext.PullRequestFiles.Select(q => pullRequestContext.CanononicalPathMapper[q.FileName])
-                    .Where(q => q != null).ToArray();
-            var reviewedFiles = reviewer.GetTouchedFiles().Where(q => prFiles.Contains(q));
-            var specializedKnowledge = reviewedFiles.Count() / (double)pullRequestContext.PullRequestFiles.Length;
-
-            var spreadingScore = 0.0;
-
-            spreadingScore = reviewerImportance * Math.Pow(probabilityOfStay * effort, _alpha) * Math.Pow(1 - specializedKnowledge, _beta);
-
-            return spreadingScore;
-        }
 
         private double ComputeBirdReviewerScore(PullRequestContext pullRequestContext, DeveloperKnowledge reviewer)
         {

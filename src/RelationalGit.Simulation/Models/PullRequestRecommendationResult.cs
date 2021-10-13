@@ -17,6 +17,8 @@ namespace RelationalGit.Simulation
             Features = features;
             DefectProneness = (1-defectProneness) * maxExpertise;
             PullRequestNumber = PRNumber;
+            // recommendedRevExpertise = recRevExp;
+            // swappedRevExpertise = swappedRevExp;
             if (selectedReviewers.Count() > 1)
             {
                 var k = 5;
@@ -59,6 +61,10 @@ namespace RelationalGit.Simulation
         public string Features { get; set; }
 
         public double? DefectProneness  { get; set; }
+
+        // public double? recommendedRevExpertise  { get; set; }
+        
+        // public double? swappedRevExpertise  { get; set; }
 
         public bool? IsRisky { get; set; }
 
