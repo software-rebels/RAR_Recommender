@@ -111,7 +111,9 @@ namespace RelationalGit.Commands
                     Expertise = result.Expertise,
                     IsRisky = result.IsRisky,
                     Features=result.Features,
-                    DefectProneness = result.DefectProneness
+                    DefectProneness = result.DefectProneness,
+                    SwappedRevExp = result.SwappedRevExpertise,
+                    RecRevExp = result.RecommendedRevExpertise
                 });
 
                 for (int i = 0; i < result.SortedCandidates.Take(10).Count(); i++)

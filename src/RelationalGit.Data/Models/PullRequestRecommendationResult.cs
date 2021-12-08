@@ -31,5 +31,9 @@
         public bool? IsRisky { get; set; }
         public string Features { get; set; }
         public double? DefectProneness { get; set; }
+
+        public double? SwappedRevExp { get; set; }
+        public double? RecRevExp { get; set; }
+
     }
 }

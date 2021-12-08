@@ -43,12 +43,32 @@ namespace RelationalGit.Recommendation
 
         private static PullRequestRecommendationResult Recommendation(PullRequestContext pullRequestContext, DeveloperKnowledge[] availableDevs, PullRequestKnowledgeDistribution bestPullRequestKnowledgeDistribution)
         {
-            return new PullRequestRecommendationResult(bestPullRequestKnowledgeDistribution.PullRequestKnowledgeDistributionFactors.Reviewers.ToArray(), availableDevs, pullRequestContext.IsRisky(), pullRequestContext.Features, pullRequestContext.ComputeDefectPronenessScore(),pullRequestContext.ComputeMaxExpertise(bestPullRequestKnowledgeDistribution.PullRequestKnowledgeDistributionFactors.Reviewers.ToArray()), pullRequestContext.PullRequest.Number);
+            var recRevExp = 0.0;
+            var val = 0.0;
+            if (availableDevs.Length != 0)
+            {
+                val = pullRequestContext.ComputeBirdReviewerScore(availableDevs[0]);
+                if (val != 0)
+                {
+                    recRevExp = val;
+                }
+            }
+            var swappedRev = pullRequestContext.ActualReviewers.Except(bestPullRequestKnowledgeDistribution.PullRequestKnowledgeDistributionFactors.Reviewers.ToArray()).ToArray();
+            var swappedRevExp = 0.0;
+            if (swappedRev.Length != 0)
+            {
+                val = pullRequestContext.ComputeBirdReviewerScore(swappedRev[0]);
+                if (val != 0)
+                {
+                    swappedRevExp = val;
+                }
+            }
+            return new PullRequestRecommendationResult(bestPullRequestKnowledgeDistribution.PullRequestKnowledgeDistributionFactors.Reviewers.ToArray(), availableDevs, pullRequestContext.IsRisky(), pullRequestContext.Features, pullRequestContext.ComputeDefectPronenessScore(),pullRequestContext.ComputeMaxExpertise(bestPullRequestKnowledgeDistribution.PullRequestKnowledgeDistributionFactors.Reviewers.ToArray()), pullRequestContext.PullRequest.Number,recRevExp, swappedRevExp);
         }
 
         private static PullRequestRecommendationResult Actual(PullRequestContext pullRequestContext)
         {
-            return new PullRequestRecommendationResult(pullRequestContext.ActualReviewers, Array.Empty<DeveloperKnowledge>(), pullRequestContext.IsRisky(), pullRequestContext.Features, pullRequestContext.ComputeDefectPronenessScore(),pullRequestContext.ComputeMaxExpertise(pullRequestContext.ActualReviewers), pullRequestContext.PullRequest.Number);
+            return new PullRequestRecommendationResult(pullRequestContext.ActualReviewers, Array.Empty<DeveloperKnowledge>(), pullRequestContext.IsRisky(), pullRequestContext.Features, pullRequestContext.ComputeDefectPronenessScore(),pullRequestContext.ComputeMaxExpertise(pullRequestContext.ActualReviewers), pullRequestContext.PullRequest.Number,0,0);
         }
 
         internal PullRequestKnowledgeDistribution GetBestDistribution(List<PullRequestKnowledgeDistribution> simulationResults)
@@ -107,6 +127,43 @@ namespace RelationalGit.Recommendation
             return folderLevelKnowlegeables;
         }
 
+        private static double ComputeBirdReviewerScore(PullRequestContext pullRequestContext, DeveloperKnowledge reviewer)
+        {
+            var score = 0.0;
+
+            foreach (var pullRequestFile in pullRequestContext.PullRequestFiles)
+            {
+                var canonicalPath = pullRequestContext.CanononicalPathMapper.GetValueOrDefault(pullRequestFile.FileName);
+                if (canonicalPath == null)
+                {
+                    continue;
+                }
+
+                var fileExpertise = pullRequestContext.KnowledgeMap.PullRequestEffortKnowledgeMap.GetFileExpertise(canonicalPath);
+
+                if (fileExpertise.TotalComments == 0)
+                {
+                    continue;
+                }
+
+                var reviewerExpertise = pullRequestContext.KnowledgeMap.PullRequestEffortKnowledgeMap.GetReviewerExpertise(canonicalPath, reviewer.DeveloperName);
+
+                if (reviewerExpertise == (0, 0, null))
+                {
+                    continue;
+                }
+
+                var scoreTotalComments = reviewerExpertise.TotalComments / (double)fileExpertise.TotalComments;
+                var scoreTotalWorkDays = reviewerExpertise.TotalWorkDays / (double)fileExpertise.TotalWorkDays;
+                var scoreRecency = (fileExpertise.RecentWorkDay == reviewerExpertise.RecentWorkDay)
+                    ? 1
+                    : 1 / (fileExpertise.RecentWorkDay - reviewerExpertise.RecentWorkDay).Value.TotalDays;
+
+               score += scoreTotalComments + scoreTotalWorkDays + scoreRecency;
+            }
+
+            return score / (3 * pullRequestContext.PullRequestFiles.Length);
+        }
         internal abstract IEnumerable<(IEnumerable<DeveloperKnowledge> Reviewers, IEnumerable<DeveloperKnowledge> SelectedCandidateKnowledge)> GetPossibleCandidateSets(PullRequestContext pullRequestContext, DeveloperKnowledge[] availableDevs);
 
         internal abstract DeveloperKnowledge[] AvailablePRKnowledgeables(PullRequestContext pullRequestContext);

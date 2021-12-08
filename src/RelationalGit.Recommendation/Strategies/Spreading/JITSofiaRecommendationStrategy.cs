@@ -55,7 +55,7 @@ namespace RelationalGit.Recommendation
             var alpha = pullRequestContext.GetRiskyFiles(_riskOwenershipThreshold).Length > 0 ? 1 : 0;
 
             // defectPronenessScore constant
-            if(defectPronenessScore > 0.2){
+            if(defectPronenessScore > 0.5){
                 alpha = 0;
             }
             var score = 1 * ((1 - alpha) * expertiseScore + alpha * spreadingScore);
