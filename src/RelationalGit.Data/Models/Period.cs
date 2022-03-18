@@ -17,6 +17,13 @@ namespace RelationalGit.Data
         public string LastCommitSha { get; set; }
 
         public string ModelParam { get; set; }
+        
+        public double dynLow { get; set; }
 
+        public double dynHigh { get; set; }
+
+        public double normLow { get; set; }
+
+        public double normHigh { get; set; }
     }
 }

@@ -135,6 +135,7 @@ namespace RelationalGit.Commands
         {
             var bulkFileTouches = new List<FileTouch>();
             var bulkFileKnowledgeable = new List<FileKnowledgeable>();
+            var bulkSimulatedLeaver = new List<SimulatedLeaver>();
 
             foreach (var period in _periods)
             {
@@ -150,6 +151,17 @@ namespace RelationalGit.Commands
                 // getting the list of people who were active in this period and also who have left the project by the end of this period
                 var availableDevelopersOfPeriod = GetAvailableDevelopersOfPeriod(period).Select(q => q.NormalizedName).ToHashSet();
                 var leaversOfPeriod = leavers[period.Id].Select(q => q.NormalizedName).ToHashSet();
+                foreach (var leaver in leavers[period.Id])
+                {
+                    bulkSimulatedLeaver.Add(new SimulatedLeaver()
+                    {
+                        LossSimulationId = leaver.LossSimulationId,
+                        PeriodId = leaver.PeriodId,
+                        NormalizedName = leaver.NormalizedName,
+                        LeavingType = leaver.LeavingType,
+                    });
+                }
+
 
                 foreach (var filePath in blameSnapshot.FilePaths)
                 {
@@ -194,6 +206,7 @@ namespace RelationalGit.Commands
                         TotalPullRequests = totalPullRequests.GetValueOrDefault(0)
                     });
 
+
                     /*bulkFileTouches.AddRange(availableCommitters.Select(q => new FileTouch()
                     {
                         CanonicalPath = filePath,
@@ -214,8 +227,10 @@ namespace RelationalGit.Commands
                 }
             }
 
+            _dbContext.BulkInsert(bulkSimulatedLeaver, new BulkConfig { BatchSize = 50000, BulkCopyTimeout = 0 });
             _dbContext.BulkInsert(bulkFileTouches, new BulkConfig { BatchSize = 50000, BulkCopyTimeout = 0 });
             _dbContext.BulkInsert(bulkFileKnowledgeable, new BulkConfig { BatchSize = 50000, BulkCopyTimeout = 0 });
+            
         }
 
         private void SaveLeaversAndFilesAtRisk(LossSimulation lossSimulation, KnowledgeDistributionMap knowledgeDistributioneMap, Dictionary<long, IEnumerable<SimulatedLeaver>> leavers)
