@@ -8,14 +8,22 @@ namespace RelationalGit.Simulation
     {
         private DeveloperKnowledge[] _selectedReviewersKnowledge;
 
-        public PullRequestRecommendationResult(DeveloperKnowledge[] selectedReviewers, DeveloperKnowledge[] sortedCandidates,bool? isRisky,string features, double? defectProneness, double maxExpertise)
+        public PullRequestRecommendationResult(DeveloperKnowledge[] selectedReviewers, DeveloperKnowledge[] sortedCandidates,bool? isRisky,string features, double? defectProneness, double maxExpertise, long PRNumber, double recRevExp, double swappedRevExp)
         {
             SortedCandidates = sortedCandidates;
             SelectedReviewers = selectedReviewers.Select(q => q.DeveloperName).ToArray();
             _selectedReviewersKnowledge = selectedReviewers;
             IsRisky = isRisky;
             Features = features;
-            DefectProneness = defectProneness * maxExpertise;
+            DefectProneness = (1-defectProneness) * maxExpertise;
+            PullRequestNumber = PRNumber;
+            RecommendedRevExpertise = recRevExp;
+            SwappedRevExpertise = swappedRevExp;
+            if (selectedReviewers.Count() > 1)
+            {
+                var k = 5;
+                k = selectedReviewers.Count();
+            }
         }
 
         public long PullRequestNumber { get; set; }
@@ -53,6 +61,10 @@ namespace RelationalGit.Simulation
         public string Features { get; set; }
 
         public double? DefectProneness  { get; set; }
+
+        public double? RecommendedRevExpertise  { get; set; }
+        
+        public double? SwappedRevExpertise  { get; set; }
 
         public bool? IsRisky { get; set; }
 

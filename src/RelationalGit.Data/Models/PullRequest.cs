@@ -34,5 +34,11 @@ namespace RelationalGit.Data
         public DateTime? OccurrenceDateTime => CreatedAtDateTime;
 
         public string EventId => Number.ToString();
+
+        public string PRCommits { get; set; }
+
+        public string Metrics { get; set; }
+
+        public double DefectProneness { get; set; }
     }
 }

@@ -60,6 +60,12 @@ namespace RelationalGit.KnowledgeShareStrategies
             else if (recommendationStrategy == KnowledgeShareStrategyType.JITSofia)
             {
                 return new JITSofiaRecommendationStrategy(knowledgeSaveReviewerReplacementType, logger, numberOfPeriodsForCalculatingProbabilityOfStay, pullRequestReviewerSelectionStrategy, addOnlyToUnsafePullrequests, recommenderOption, changePast);
+            
+            }
+            else if (recommendationStrategy == KnowledgeShareStrategyType.Exp)
+            {
+                return new ExpertiseRecommendationStrategy(knowledgeSaveReviewerReplacementType, logger, numberOfPeriodsForCalculatingProbabilityOfStay, pullRequestReviewerSelectionStrategy, addOnlyToUnsafePullrequests, recommenderOption, changePast);
+            
             }
             throw new ArgumentException($"invalid {nameof(recommendationStrategy)}");
         }

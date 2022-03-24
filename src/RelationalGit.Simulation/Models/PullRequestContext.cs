@@ -252,46 +252,101 @@ namespace RelationalGit.Simulation
 
             return _totalContributionsInPeriodDic[periodId];
         }
-        
+        public double ComputeBirdReviewerScore(DeveloperKnowledge reviewer)
+        {
+            var score = 0.0;
+
+            foreach (var pullRequestFile in PullRequestFiles)
+            {
+                var canonicalPath = CanononicalPathMapper.GetValueOrDefault(pullRequestFile.FileName);
+                if (canonicalPath == null)
+                {
+                    continue;
+                }
+
+                var fileExpertise = KnowledgeMap.PullRequestEffortKnowledgeMap.GetFileExpertise(canonicalPath);
+
+                if (fileExpertise.TotalComments == 0)
+                {
+                    continue;
+                }
+
+                var reviewerExpertise = KnowledgeMap.PullRequestEffortKnowledgeMap.GetReviewerExpertise(canonicalPath, reviewer.DeveloperName);
+
+                if (reviewerExpertise == (0, 0, null))
+                {
+                    continue;
+                }
+
+                var scoreTotalComments = reviewerExpertise.TotalComments / (double)fileExpertise.TotalComments;
+                var scoreTotalWorkDays = reviewerExpertise.TotalWorkDays / (double)fileExpertise.TotalWorkDays;
+                var scoreRecency = (fileExpertise.RecentWorkDay == reviewerExpertise.RecentWorkDay)
+                    ? 1
+                    : 1 / (fileExpertise.RecentWorkDay - reviewerExpertise.RecentWorkDay).Value.TotalDays;
+
+                score += scoreTotalComments + scoreTotalWorkDays + scoreRecency;
+            }
+
+            return score / (3 * PullRequestFiles.Length);
+        }
         public double ComputeMaxExpertise(DeveloperKnowledge[] selectedReviewers)
         {
-            if(this.NumberOfExperts!=null){
-                return (double)this.NumberOfExperts;
-            }
-            if(PullRequestFiles.Count()==0){
+             if(PullRequestFiles.Count()==0){
                 return 0;
             }
-            Dictionary<string, double> expertDic = new Dictionary<string, double>();
-            foreach(var file in PullRequestFiles){
-                var fileExpertise = KnowledgeMap.PullRequestEffortKnowledgeMap.GetFileExpertise(file.FileName);
-                foreach(var reviewer in selectedReviewers){
-                    // if(KnowledgeMap.PullRequestEffortKnowledgeMap.HasTouchedTheFile(file.FileName,reviewer.DeveloperName)){
-                    //     expertDic[reviewer.DeveloperName]= 1;
-                    // }
-                    if(!expertDic.ContainsKey(reviewer.DeveloperName)){
-                        expertDic[reviewer.DeveloperName] = 0;
-                    }
-                    if(!KnowledgeMap.PullRequestEffortKnowledgeMap.HasTouchedTheFile(file.FileName,reviewer.DeveloperName)){
-                        continue;
-                    }
-
-                    var reviewerExpertise = KnowledgeMap.PullRequestEffortKnowledgeMap.GetReviewerExpertise(file.FileName, reviewer.DeveloperName);
-                    double scoreTotalComments = 0;
-                    scoreTotalComments = reviewerExpertise.TotalComments / (double)fileExpertise.TotalComments;
-
-                    double scoreTotalWorkDays = 0;
-                    scoreTotalWorkDays = reviewerExpertise.TotalWorkDays / (double)fileExpertise.TotalWorkDays;
-                    var scoreRecency = (fileExpertise.RecentWorkDay == reviewerExpertise.RecentWorkDay)
-                        ? 1
-                        : 1 / (fileExpertise.RecentWorkDay - reviewerExpertise.RecentWorkDay).Value.TotalDays;
-
-                    expertDic[reviewer.DeveloperName] += (scoreTotalComments + scoreTotalWorkDays + scoreRecency)/3;  
+            Dictionary<string, double> expertDicNew = new Dictionary<string, double>();
+            foreach(var reviewer in selectedReviewers){
+                // var prFiles = PullRequestFiles.Select(q => CanononicalPathMapper.GetValueOrDefault(q.FileName));
+                // var touchedFiles =  reviewer.GetTouchedFiles().ToHashSet();
+                var val = ComputeBirdReviewerScore(reviewer);
+                if (val != 0)
+                {
+                    expertDicNew[reviewer.DeveloperName] = val;
                 }
             }
-            foreach(var reviewer in selectedReviewers){
-                expertDic[reviewer.DeveloperName] /= PullRequestFiles.Count();
-            }
-            return expertDic.Count()!=0 ? expertDic.Values.Max() : 0;
+
+            return  expertDicNew.Count()!=0 ? expertDicNew.Values.Max() : 0;
+            // if(this.NumberOfExperts!=null){
+            //     return (double)this.NumberOfExperts;
+            // }
+            // if(PullRequestFiles.Count()==0){
+            //     return 0;
+            // }
+            // if (PullRequest.Number== 37503)
+            // {
+            //     var k = 5;
+            // }
+            // Dictionary<string, double> expertDic = new Dictionary<string, double>();
+            // foreach(var file in PullRequestFiles){
+            //     var fileExpertise = KnowledgeMap.PullRequestEffortKnowledgeMap.GetFileExpertise(file.FileName);
+            //     foreach(var reviewer in selectedReviewers){
+            //         // if(KnowledgeMap.PullRequestEffortKnowledgeMap.HasTouchedTheFile(file.FileName,reviewer.DeveloperName)){
+            //         //     expertDic[reviewer.DeveloperName]= 1;
+            //         // }
+            //         if(!expertDic.ContainsKey(reviewer.DeveloperName)){
+            //             expertDic[reviewer.DeveloperName] = 0;
+            //         }
+            //         if(!KnowledgeMap.PullRequestEffortKnowledgeMap.HasTouchedTheFile(file.FileName,reviewer.DeveloperName)){
+            //             continue;
+            //         }
+
+            //         var reviewerExpertise = KnowledgeMap.PullRequestEffortKnowledgeMap.GetReviewerExpertise(file.FileName, reviewer.DeveloperName);
+            //         double scoreTotalComments = 0;
+            //         scoreTotalComments = reviewerExpertise.TotalComments / (double)fileExpertise.TotalComments;
+
+            //         double scoreTotalWorkDays = 0;
+            //         scoreTotalWorkDays = reviewerExpertise.TotalWorkDays / (double)fileExpertise.TotalWorkDays;
+            //         var scoreRecency = (fileExpertise.RecentWorkDay == reviewerExpertise.RecentWorkDay)
+            //             ? 1
+            //             : 1 / (fileExpertise.RecentWorkDay - reviewerExpertise.RecentWorkDay).Value.TotalDays;
+
+            //         expertDic[reviewer.DeveloperName] += (scoreTotalComments + scoreTotalWorkDays + scoreRecency)/3;  
+            //     }
+            // }
+            // foreach(var reviewer in selectedReviewers){
+            //     expertDic[reviewer.DeveloperName] /= PullRequestFiles.Count();
+            // }
+            // return expertDic.Count()!=0 ? expertDic.Values.Max() : 0;
          }
         public double? ComputeDefectPronenessScore()
         {
@@ -299,53 +354,57 @@ namespace RelationalGit.Simulation
                 return this.defectPronness;
             }
 
-            if(PullRequestFiles.Count()==0){
-                return 0;
-            }
-            double addLineCoefficient = 1;
-            double delLineCoefficient = 1;
-            double modificationLineCoefficient = 1;
-            double preReleaseBugsCoefficient = 2;
+            //if(PullRequestFiles.Count()==0){
+            //    return 0;
+            //}
+            //double addLineCoefficient = 1;
+            //double delLineCoefficient = 1;
+            //double modificationLineCoefficient = 1;
+            //double preReleaseBugsCoefficient = 2;
 
-            double additions = 0;
-            double deletions = 0;
-            double modifications = 0;
-            double changes = 0;
+            //double additions = 0;
+            //double deletions = 0;
+            //double modifications = 0;
+            //double changes = 0;
+            //var fileNo = 0;
 
-            foreach (var file in PullRequestFiles)
-            {
-                additions += (double)file.Additions;
-                deletions += (double)file.Deletions;
-                modifications += (double)file.Changes;
-            }
-            var preReleaseBugCounts = new Dictionary<string, int>();
+            //foreach (var file in PullRequestFiles)
+            //{
+            //    fileNo += 1;
+            //    additions += (double)file.Additions;
+            //    deletions += (double)file.Deletions;
+            //    modifications += (double)file.Changes;
+            //}
+            //var preReleaseBugCounts = new Dictionary<string, int>();
 
-            foreach(var file in BugFixCommitChanges){
-                if(!preReleaseBugCounts.ContainsKey(file.Path)){
-                    preReleaseBugCounts[file.Path] = 1;
-                    continue;
-                }
-                preReleaseBugCounts[file.Path] += 1;
-            }
-            var preReleaseBugScores =  new Dictionary<string, double>();
-            foreach(var file in PullRequestFiles){
-                if(!preReleaseBugCounts.ContainsKey(file.FileName)){
-                    preReleaseBugScores[file.FileName] = 0;
-                    continue;
-                }
-                preReleaseBugScores[file.FileName] = 1 -  Math.Pow(0.5,preReleaseBugCounts[file.FileName]);
-            }
+            //foreach(var file in BugFixCommitChanges){
+            //    if(!preReleaseBugCounts.ContainsKey(file.Path)){
+            //        preReleaseBugCounts[file.Path] = 1;
+            //        continue;
+            //    }
+            //    preReleaseBugCounts[file.Path] += 1;
+            //}
+            //var preReleaseBugScores =  new Dictionary<string, double>();
+            //foreach(var file in PullRequestFiles){
+            //    if(!preReleaseBugCounts.ContainsKey(file.FileName)){
+            //        preReleaseBugScores[file.FileName] = 0;
+            //        continue;
+            //    }
+            //    preReleaseBugScores[file.FileName] = 1 -  Math.Pow(0.5,preReleaseBugCounts[file.FileName]);
+            //}
 
-            var overallPreReleaseBugScore = preReleaseBugScores.Sum(q=>q.Value)/PullRequestFiles.Count();
-            changes = additions + deletions + modifications;
-            if(changes==0){
-                this.defectPronness = 0;
-            }else{
-                this.defectPronness = (addLineCoefficient * (additions/changes) + delLineCoefficient * (deletions/changes) + 
-                                        modificationLineCoefficient * (modifications/changes) + preReleaseBugsCoefficient * overallPreReleaseBugScore ) / (addLineCoefficient+ delLineCoefficient+modificationLineCoefficient+preReleaseBugsCoefficient);
-            }
+            //var overallPreReleaseBugScore = preReleaseBugScores.Sum(q=>q.Value)/PullRequestFiles.Count();
+            //changes = additions + deletions + modifications;
+            //if(changes==0){
+            //    this.defectPronness = 0;
+            //}else{
+            //    this.defectPronness = (addLineCoefficient * (additions/changes) + delLineCoefficient * (deletions/changes) + 
+            //}
 
-            return this.defectPronness;
+
+            //this.PullRequest = 
+            this.defectPronness = this.PullRequest.DefectProneness;
+            return this.PullRequest.DefectProneness;
         }
     }
 

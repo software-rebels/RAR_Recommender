@@ -13,14 +13,35 @@ namespace RelationalGit.Recommendation
 
         internal override double ComputeReviewerScore(PullRequestContext pullRequestContext, DeveloperKnowledge reviewer)
         {
-            var totalReviews = pullRequestContext.PullRequestKnowledgeables.Sum(q => q.NumberOfReviews);
+            var prFiles = pullRequestContext.PullRequestFiles.Select(q => pullRequestContext.CanononicalPathMapper[q.FileName]).Where(q => q != null).ToArray();
+            string[] reviewedFiles = prFiles.Intersect(reviewer.GetReviewedFiles().Keys.ToArray()).ToArray();
+            int ReviewsOfAllFiles = 0;
+            foreach(var i in reviewedFiles)
+            {
+                if(reviewer.GetReviewedFiles()[i] > 1)
+                {
+                    ReviewsOfAllFiles += reviewer.GetReviewedFiles()[i];
+                }
+                else
+                {
+                    ReviewsOfAllFiles += 1;
+                }
+            }
+             int totalReviews = pullRequestContext.PullRequestKnowledgeables.Sum(q => q.NumberOfReviews);
 
             if(totalReviews == 0)
             {
                 return 0;
             }
-
-            return reviewer.NumberOfReviews / (double)totalReviews;
+            // var prevVal = reviewer.NumberOfReviews / (double)totalReviews;
+            // double currentVal = ReviewsOfAllFiles / (double)totalReviews;
+            // if (reviewer.NumberOfReviews != ReviewsOfAllFiles)
+            // {
+            //     var k = currentVal;
+            //    return k;
+            // }
+            return ReviewsOfAllFiles / (double)totalReviews;
+            // return reviewer.NumberOfReviews / (double)totalReviews;
         }
     }
 }

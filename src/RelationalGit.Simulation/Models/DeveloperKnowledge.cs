@@ -10,6 +10,8 @@ namespace RelationalGit.Simulation
 
         private HashSet<string> _touchedFiles = new HashSet<string>();
 
+        private Dictionary<string, int> _reviewedFileCounts =   new Dictionary<string, int>();
+
         public int NumberOfTouchedFiles => _touchedFiles.Count;
 
         public int NumberOfReviewedFiles => _reviewedFile.Count;
@@ -38,6 +40,10 @@ namespace RelationalGit.Simulation
             return _touchedFiles;
         }
 
+        public Dictionary<string, int> GetReviewedFiles()
+        {
+            return _reviewedFileCounts;
+        }
         public void AddCommittedFile(string fileName)
         {
             _committedFile.Add(fileName);
@@ -47,6 +53,12 @@ namespace RelationalGit.Simulation
         public void AddReviewedFile(string fileName)
         {
             _reviewedFile.Add(fileName);
+            if (!_reviewedFileCounts.ContainsKey(fileName))
+            {
+                _reviewedFileCounts[fileName] = 1;
+            }else{
+                _reviewedFileCounts[fileName] += 1;
+            }
             _touchedFiles.Add(fileName);
         }
     }
