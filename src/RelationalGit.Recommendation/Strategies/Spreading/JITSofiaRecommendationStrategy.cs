@@ -54,9 +54,15 @@ namespace RelationalGit.Recommendation
 
             var alpha = pullRequestContext.GetRiskyFiles(_riskOwenershipThreshold).Length > 0 ? 1 : 0;
 
+            //  static method
+            // double low = 0;
+            // double high = 1;
+
+            // dynamic method
             //double low = pullRequestContext.Periods[pullRequestContext.PullRequestPeriod.Id].dynLow;
             //double high = pullRequestContext.Periods[pullRequestContext.PullRequestPeriod.Id].dynHigh;
-
+            
+            //  normal method
             double low = pullRequestContext.Periods[pullRequestContext.PullRequestPeriod.Id].normLow;
             double high = pullRequestContext.Periods[pullRequestContext.PullRequestPeriod.Id].normHigh;
 
