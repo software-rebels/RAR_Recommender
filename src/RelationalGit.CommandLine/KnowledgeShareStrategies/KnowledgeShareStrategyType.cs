@@ -26,7 +26,7 @@ namespace RelationalGit.KnowledgeShareStrategies
 
         public static string ContributionRec => "ContributionRec";
 
-        public static string JITSofia => "JITSofia";
+        public static string JITSofia => "RAR";
 
         public static string Exp => "Expertise";
 
