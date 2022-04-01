@@ -1,47 +1,12 @@
 # Each of the following variables contains the path to the corresponding configuation file.
 
-$corefx_conf = "C:/Users/f2kazemi/Desktop/cs848/code/RelationalGit/ReplicationPackage/corefx_conf.json"
-$coreclr_conf = "C:/Users/f2kazemi/Desktop/cs848/code/RelationalGit/ReplicationPackage/coreclr_conf.json"
-$roslyn_conf = "C:/Users/f2kazemi/Desktop/cs848/code/RelationalGit/ReplicationPackage/roslyn_conf.json"
-$rust_conf = "C:/Users/f2kazemi/Desktop/cs848/code/RelationalGit/ReplicationPackage/rust_conf.json"
-$kubernetes_conf = "C:/Users/f2kazemi/Desktop/cs848/code/RelationalGit/ReplicationPackage/kubernetes_conf.json"
+$roslyn_conf = "./code/RelationalGit/ReplicationPackage/roslyn_conf.json"
+$rust_conf = "./code/RelationalGit/ReplicationPackage/rust_conf.json"
+$kubernetes_conf = "./code/RelationalGit/ReplicationPackage/kubernetes_conf.json"
 
 # For each project, run all the simulations.
 # Using the NoReviews parameter for recommendation-strategy, we perform a simulation in which no review has been conducted in the project.
 # Using the Reality parameter for recommendation-strategy, we perform a simulation which reflects exactly what has been happened in reallity during code reviews.
-
-# CoreFX Simulations
-Write-Output "-------------------------NoRev----------------------------"
-dotnet-rgit --cmd simulate-recommender --recommendation-strategy NoReviews --conf-path $corefx_conf
-Write-Output "-------------------------Reality---------------------------"
-dotnet-rgit --cmd simulate-recommender --recommendation-strategy Reality --conf-path $corefx_conf
-Write-Output "--------------------------cHRev---------------------------"
-dotnet-rgit --cmd simulate-recommender --recommendation-strategy cHRev --conf-path $corefx_conf
-Write-Output "--------------------------Authorship---------------------------"
-dotnet-rgit --cmd simulate-recommender --recommendation-strategy AuthorshipRec --conf-path $corefx_conf
-Write-Output "----------------------------RecOwn------------------------"
-dotnet-rgit --cmd simulate-recommender --recommendation-strategy RecOwnRec  --conf-path $corefx_conf
-Write-Output "--------------------------Retention-------------------------"
-dotnet-rgit --cmd simulate-recommender --recommendation-strategy RetentionRec  --conf-path $corefx_conf
-Write-Output "--------------------------LearnRec--------------------------"
-dotnet-rgit --cmd simulate-recommender --recommendation-strategy LearnRec  --conf-path $corefx_conf
-Write-Output "--------------------------Turnover--------------------------"
-dotnet-rgit --cmd simulate-recommender --recommendation-strategy TurnoverRec --conf-path $corefx_conf
-Write-Output "-------------------------Sofia-------------------------"
-dotnet-rgit --cmd simulate-recommender --recommendation-strategy Sofia  --conf-path $corefx_conf
-
-
-# # CoreCLR Simulations
-# dotnet-rgit --cmd simulate-recommender --recommendation-strategy NoReviews --conf-path $coreclr_conf
-# dotnet-rgit --cmd simulate-recommender --recommendation-strategy Reality --conf-path $coreclr_conf
-# dotnet-rgit --cmd simulate-recommender --recommendation-strategy cHRev --conf-path $coreclr_conf
-# dotnet-rgit --cmd simulate-recommender --recommendation-strategy AuthorshipRec --conf-path $coreclr_conf
-# dotnet-rgit --cmd simulate-recommender --recommendation-strategy RecOwnRec  --conf-path $coreclr_conf
-# dotnet-rgit --cmd simulate-recommender --recommendation-strategy RetentionRec  --conf-path $coreclr_conf
-# dotnet-rgit --cmd simulate-recommender --recommendation-strategy LearnRec  --conf-path $coreclr_conf
-# dotnet-rgit --cmd simulate-recommender --recommendation-strategy TurnoverRec --conf-path $coreclr_conf
-# dotnet-rgit --cmd simulate-recommender --recommendation-strategy Sofia  --conf-path $coreclr_conf
-
 
 # # Roslyn Simulations
 # dotnet-rgit --cmd simulate-recommender --recommendation-strategy NoReviews --conf-path $roslyn_conf

@@ -34,6 +34,7 @@ Where Strategy should be replaced by one of:
 - cHRev
 - AuthorshipRec
 - RevOwnRec
+
 And the json file is the one resides in /ReplicationPackage folder.
 Once the replication is finished, you can runthe following command to compare the CRR approach with reality:
 ```
