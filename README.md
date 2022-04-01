@@ -13,7 +13,7 @@ In order to run the code and replicate the results, you should first install the
 Sql Server - [LocalDb, Express, and Developer Editions](https://www.microsoft.com/en-ca/sql-server/sql-server-downloads) 
 
 # Import data:
-Once you install the necessary tools, you can download the dataset files from [here]() and import them using Sql Server Management Studio. 
+Once you install the necessary tools, you can download the dataset files from [here](https://zenodo.org/record/6403760#.Ykc9zW7MJuU) and import them using Sql Server Management Studio. 
 After importing the files, you have to update the database credntials in the files that needs connection to the datase. These files are locates inside:
 - /notebooks
 - /ReplicationPackage

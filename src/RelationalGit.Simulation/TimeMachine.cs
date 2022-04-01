@@ -367,10 +367,19 @@ _logger.LogInformation("{datetime}: flying in time has finished.", DateTime.Now)
 
         private IEnumerable<Developer> GetAvailableDevelopersOfPeriod(PullRequest pullRequest)
         {
+            // var period = GetPeriodOfPullRequest(pullRequest);
+            // return DevelopersDic.Values.Where(dev => dev.FirstParticipationPeriodId <= period.Id
+            //     && dev.LastParticipationPeriodId >= period.Id
+            //     && !_megaDevelopersSet.Contains(dev.NormalizedName) // remove mega devs;
+            //     ); 
             return DevelopersDic.Values.Where(dev => dev.FirstParticipationDateTime <= pullRequest.CreatedAtDateTime
-                && dev.LastParticipationDateTime >= pullRequest.CreatedAtDateTime
+                // && dev.LastParticipationPeriodId >= Math.Max(period.Id-1, 1)
                 && !_megaDevelopersSet.Contains(dev.NormalizedName) // remove mega devs;
-                ); 
+                );     
+            // return DevelopersDic.Values.Where(dev => dev.FirstParticipationDateTime <= pullRequest.CreatedAtDateTime
+            //     && dev.LastParticipationDateTime >= pullRequest.CreatedAtDateTime
+            //     && !_megaDevelopersSet.Contains(dev.NormalizedName) // remove mega devs;
+            //     ); 
         }
 
         private Period GetPeriodOfPullRequest(PullRequest pullRequest)
