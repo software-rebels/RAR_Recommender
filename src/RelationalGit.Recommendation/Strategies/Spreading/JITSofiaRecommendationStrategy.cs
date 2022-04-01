@@ -66,7 +66,8 @@ namespace RelationalGit.Recommendation
             double low = pullRequestContext.Periods[pullRequestContext.PullRequestPeriod.Id].normLow;
             double high = pullRequestContext.Periods[pullRequestContext.PullRequestPeriod.Id].normHigh;
 
-            double threshold =low + 0.25 * (high - low);
+            // double threshold = 0.1; //RQ2: static value for P_D
+            double threshold =low + 0.5 * (high - low); // RQ3: dynamic value for P_D
 
             // defectPronenessScore constant
             if (defectPronenessScore > threshold)
