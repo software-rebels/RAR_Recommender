@@ -1,5 +1,10 @@
 # Replication Package
-This repository contains the necessary data for replicating the necessary information to replicate the study of "Exploring the Notion of Risk in Reviewer Recommendation". This code extends the Relationalgit package (https://github.com/CESEL/RelationalGit), and add some functionlities that is needed to incorporate the concept of fix-inducing likelihood of a project.
+This repository contains the necessary data for replicating the necessary information to replicate the study of "Exploring the Notion of Risk in Reviewer Recommendation". This code extends the #Relationalgit package (https://github.com/CESEL/RelationalGit), and add some functionlities that is needed to incorporate the concept of fix-inducing likelihood of a project.
+
+# Fully Autmated Replication package
+A dockerized version of this replication package for this study is available at:
+https://figshare.com/articles/dataset/Replication_Package_of_the_study_Exploring_the_Notion_of_Risk_in_Reviewer_Recommendation_/20673255
+We recommend to use this package if you want to replicate our study.
 
 # Dependencies
 In order to run the code and replicate the results, you should first install the following tools:
